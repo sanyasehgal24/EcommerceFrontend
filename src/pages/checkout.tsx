@@ -263,17 +263,140 @@
 
 
 
-import { Elements, useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
-import { loadStripe} from "@stripe/stripe-js";
+// import { Elements, useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+// import { loadStripe} from "@stripe/stripe-js";
+// import { FormEvent, useState } from "react";
+// import toast from "react-hot-toast";
+// import { useDispatch, useSelector } from "react-redux";
+// import { Navigate, useLocation, useNavigate } from "react-router-dom";
+// import { useNewOrderMutation } from "../redux/api/orderAPI";
+// import { resetCart } from "../redux/reducer/cartReducer";
+// import { NewOrderRequest } from "../types/api-types";
+// import { responseToast } from "../utils/features";
+// import { CartReducerInitialState, UserReducerInitialState } from "../types/reducer-types";
+
+// const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_KEY);
+
+// const CheckOutForm = () => {
+//   const stripe = useStripe();
+//   const elements = useElements();
+//   const navigate = useNavigate();
+//   const dispatch = useDispatch();
+//   const { user } = useSelector((state: { userReducer: UserReducerInitialState }) => state.userReducer);
+//   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+//   const [newOrder] = useNewOrderMutation();
+//   const {
+//     shippingInfo,
+//     cartItems,
+//     subtotal,
+//     tax,
+//     discount,
+//     shippingCharges,
+//     total,
+//   } = useSelector((state: { cartReducer: CartReducerInitialState }) => state.cartReducer);
+
+//   const orderData: NewOrderRequest = {
+//     shippingInfo,
+//     orderItems: cartItems,
+//     subtotal,
+//     tax,
+//     discount,
+//     shippingCharges,
+//     total,
+//     user: user?._id!,
+//   };
+// const clientSecret = "pi_3OhvNdSGCVKc9z9u0rv4LKlX_secret_zheu7M1e9MoJ7G14zermx0FYn";
+//   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
+//     e.preventDefault();
+//     if (!stripe || !elements) return;
+//     setIsProcessing(true);
+//     try {
+//      // const cardElement = elements.getElement(CardElement);
+//       const { paymentIntent , error} = await stripe.confirmCardPayment(clientSecret, {
+//         payment_method: {
+//           card: elements.getElement(CardElement),
+     
+//           billing_details: {
+//             name: user?.name || "",
+//           },
+//         },
+//         shipping: {
+//           name: user?.name || "",
+//           address: {
+//             line1: shippingInfo.address,
+//             country: 'IN'
+//           }
+//         },
+//       });
+
+//       if (error) {
+//         setIsProcessing(false);
+//         return toast.error(error.message || "Something Went Wrong");
+//       }
+
+//       if (paymentIntent?.status === "succeeded") {
+//         const res = await newOrder(orderData);
+//         dispatch(resetCart());
+//         responseToast(res, navigate, "/orders");
+//       }
+//     } catch (error) {
+//       setIsProcessing(false);
+//       return toast.error("Something Went Wrong");
+//     }
+//   };
+
+//   return (
+//     <div className="checkout-container">
+//       <form onSubmit={submitHandler}>
+//         <CardElement />
+//         <button type="submit" disabled={isProcessing}>
+//           {isProcessing ? "Processing..." : "Pay"}
+//         </button>
+//       </form>
+//     </div>
+//   );
+// };
+
+// const Checkout = () => {
+//   const location = useLocation();
+//   const clientSecret: string | undefined = location.state;
+
+//   if (!clientSecret) return <Navigate to={"/shipping"} />;
+
+//   return (
+//     <Elements stripe={stripePromise}>
+//       <CheckOutForm />
+//     </Elements>
+//   );
+// };
+
+// export default Checkout;
+
+
+
+
+
+
+
+
+
+
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useNewOrderMutation } from "../redux/api/orderAPI";
 import { resetCart } from "../redux/reducer/cartReducer";
+import { RootState } from "../redux/store";
 import { NewOrderRequest } from "../types/api-types";
 import { responseToast } from "../utils/features";
-import { CartReducerInitialState, UserReducerInitialState } from "../types/reducer-types";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_KEY);
 
@@ -282,9 +405,9 @@ const CheckOutForm = () => {
   const elements = useElements();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state: { userReducer: UserReducerInitialState }) => state.userReducer);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [newOrder] = useNewOrderMutation();
+
+  const { user } = useSelector((state: RootState) => state.userReducer);
+
   const {
     shippingInfo,
     cartItems,
@@ -293,62 +416,51 @@ const CheckOutForm = () => {
     discount,
     shippingCharges,
     total,
-  } = useSelector((state: { cartReducer: CartReducerInitialState }) => state.cartReducer);
+  } = useSelector((state: RootState) => state.cartReducer);
 
-  const orderData: NewOrderRequest = {
-    shippingInfo,
-    orderItems: cartItems,
-    subtotal,
-    tax,
-    discount,
-    shippingCharges,
-    total,
-    user: user?._id!,
-  };
-const clientSecret = "pi_3OhvNdSGCVKc9z9u0rv4LKlX_secret_zheu7M1e9MoJ7G14zermx0FYn";
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const [newOrder] = useNewOrderMutation();
+
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!stripe || !elements) return;
     setIsProcessing(true);
-    try {
-     // const cardElement = elements.getElement(CardElement);
-      const { paymentIntent , error} = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-     
-          billing_details: {
-            name: user?.name || "",
-          },
-        },
-        shipping: {
-          name: user?.name || "",
-          address: {
-            line1: shippingInfo.address,
-            country: 'IN'
-          }
-        },
-      });
 
-      if (error) {
-        setIsProcessing(false);
-        return toast.error(error.message || "Something Went Wrong");
-      }
+    const orderData: NewOrderRequest = {
+      shippingInfo,
+      orderItems: cartItems,
+      subtotal,
+      tax,
+      discount,
+      shippingCharges,
+      total,
+      user: user?._id!,
+    };
 
-      if (paymentIntent?.status === "succeeded") {
-        const res = await newOrder(orderData);
-        dispatch(resetCart());
-        responseToast(res, navigate, "/orders");
-      }
-    } catch (error) {
+    const { paymentIntent, error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: window.location.origin },
+      redirect: "if_required",
+    });
+
+    if (error) {
       setIsProcessing(false);
-      return toast.error("Something Went Wrong");
+      return toast.error(error.message || "Something Went Wrong");
     }
-  };
 
+    if (paymentIntent.status === "succeeded") {
+      const res = await newOrder(orderData);
+      dispatch(resetCart());
+      responseToast(res, navigate, "/orders");
+    }
+    setIsProcessing(false);
+  };
   return (
     <div className="checkout-container">
       <form onSubmit={submitHandler}>
-        <CardElement />
+        <PaymentElement />
         <button type="submit" disabled={isProcessing}>
           {isProcessing ? "Processing..." : "Pay"}
         </button>
@@ -359,12 +471,18 @@ const clientSecret = "pi_3OhvNdSGCVKc9z9u0rv4LKlX_secret_zheu7M1e9MoJ7G14zermx0F
 
 const Checkout = () => {
   const location = useLocation();
+
   const clientSecret: string | undefined = location.state;
 
   if (!clientSecret) return <Navigate to={"/shipping"} />;
 
   return (
-    <Elements stripe={stripePromise}>
+    <Elements
+      options={{
+        clientSecret,
+      }}
+      stripe={stripePromise}
+    >
       <CheckOutForm />
     </Elements>
   );
